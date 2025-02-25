@@ -15,7 +15,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/vite-plugin": "0.1.1",
+    "@cloudflare/vite-plugin": "0.1.5",
     "@cloudflare/workers-types": "^4.20250224.0",
     "@tailwindcss/vite": "^4.0.8",
     "@types/node": "^22.13.5",
