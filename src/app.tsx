@@ -20,10 +20,19 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { TrashIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { ToolInvocationComponent } from "@/components/tool-invocation";
 import { useEffect } from "react";
 import { cn } from "./lib/utils";
-import { WelcomeMessage } from "./components/welcome-message";
+import { WelcomeMessage } from "@/components/welcome-message";
+import {
+	ToolNameComponent,
+	ToolInvocationHeader,
+	ToolInvocationComponent,
+	ToolInvocationData,
+	ToolInvocationDataTrigger,
+	ToolInvocationBody,
+	ToolInvocationConfirmation,
+} from "@/components/ui/tool-invocation";
+import { APPROVAL } from "./shared";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
@@ -162,23 +171,59 @@ export default function App() {
 																		)}
 																	/>
 																);
-															case "tool-invocation":
-																return (
-																	<ToolInvocationComponent
-																		key={part.toolInvocation.toolCallId}
-																		toolInvocation={part.toolInvocation}
-																		toolsRequiringConfirmation={
-																			toolsRequiringConfirmation
-																		}
-																		addToolResult={(result) => {
-																			addToolResult({
-																				toolCallId:
-																					part.toolInvocation.toolCallId,
-																				result,
-																			});
-																		}}
-																	/>
-																);
+															case "tool-invocation": {
+																const toolName = part.toolInvocation.toolName;
+																const args = part.toolInvocation.args;
+																const toolId = part.toolInvocation.toolCallId;
+																const toolState = part.toolInvocation.state;
+																if (
+																	toolsRequiringConfirmation.includes(
+																		toolName as keyof typeof tools,
+																	)
+																) {
+																	if (
+																		toolState === "call" ||
+																		toolState === "result"
+																	) {
+																		return (
+																			<ToolInvocationComponent
+																				key={toolId}
+																				collapsible={true}
+																			>
+																				<ToolInvocationHeader>
+																					<ToolNameComponent
+																						name={
+																							toolState === "call"
+																								? `Confirm ${toolName}`
+																								: `Used ${toolName}`
+																						}
+																					/>
+																					<ToolInvocationDataTrigger />
+																				</ToolInvocationHeader>
+																				<ToolInvocationBody>
+																					<ToolInvocationData data={args} />
+																					{toolState === "call" && (
+																						<ToolInvocationConfirmation
+																							onConfirm={() =>
+																								addToolResult({
+																									toolCallId: toolId,
+																									result: APPROVAL.YES,
+																								})
+																							}
+																							onCancel={() =>
+																								addToolResult({
+																									toolCallId: toolId,
+																									result: APPROVAL.NO,
+																								})
+																							}
+																						/>
+																					)}
+																				</ToolInvocationBody>
+																			</ToolInvocationComponent>
+																		);
+																	}
+																}
+															}
 														}
 													})}
 												</ChatMessageBody>
