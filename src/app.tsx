@@ -15,11 +15,14 @@ import { ChatMessageArea } from "@/components/ui/chat-message-area";
 import { useAgent } from "agents-sdk/react";
 import { useAgentChat } from "agents-sdk/ai-react";
 import type { Message } from "@ai-sdk/react";
-import { ThemeProvider } from "./components/theme-provider";
-import { ThemeToggle } from "./components/theme-toggle";
-import { Button } from "./components/ui/button";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { CloudIcon, TrashIcon } from "lucide-react";
-import { Separator } from "./components/ui/separator";
+import { Separator } from "@/components/ui/separator";
+import { ToolInvocationComponent } from "@/components/tool-invocation";
+import { useEffect } from "react";
+import { cn } from "./lib/utils";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
@@ -63,6 +66,10 @@ export default function App() {
 		handleSubmit();
 	};
 
+	useEffect(() => {
+		console.log("messages", JSON.parse(JSON.stringify(messages)));
+	}, [messages]);
+
 	return (
 		<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 			<div className="flex flex-col h-screen">
@@ -71,9 +78,7 @@ export default function App() {
 						<div className="flex flex-col items-start">
 							<div className="flex items-center gap-3">
 								<img src="/favicon.ico" alt="logo" className="size-8" />
-								<h1 className="text-xl md:text-2xl font-bold">
-									AI Chat Assistant
-								</h1>
+								<h1 className="text-xl md:text-2xl font-bold">AI Chat Agent</h1>
 							</div>
 
 							<div className="flex flex-wrap justify-start md:justify-start text-sm text-muted-foreground gap-2">
@@ -120,7 +125,7 @@ export default function App() {
 				<div className="flex-1 overflow-hidden">
 					<ChatMessageArea scrollButtonAlignment="center" className="h-full">
 						<div className="max-w-2xl mx-auto w-full px-4 py-8 space-y-4">
-							{messages.map((message) => {
+							{messages.map((message: Message) => {
 								if (message.role !== "user") {
 									return (
 										<ChatMessage key={message.id} id={message.id}>
@@ -133,7 +138,41 @@ export default function App() {
 															: new Date()
 													}
 												/>
-												<ChatMessageContent content={message.content} />
+												{message.parts?.map((part, index) => {
+													switch (part.type) {
+														case "text":
+															return (
+																<ChatMessageContent
+																	key={index}
+																	content={part.text.replace(
+																		/^scheduled message: /,
+																		"",
+																	)}
+																	className={cn(
+																		part.text.startsWith("scheduled-message") &&
+																			"font-bold",
+																	)}
+																/>
+															);
+														case "tool-invocation":
+															return (
+																<ToolInvocationComponent
+																	key={part.toolInvocation.toolCallId}
+																	toolInvocation={part.toolInvocation}
+																	toolsRequiringConfirmation={
+																		toolsRequiringConfirmation
+																	}
+																	addToolResult={(result) => {
+																		addToolResult({
+																			toolCallId:
+																				part.toolInvocation.toolCallId,
+																			result,
+																		});
+																	}}
+																/>
+															);
+													}
+												})}
 											</ChatMessageBody>
 										</ChatMessage>
 									);

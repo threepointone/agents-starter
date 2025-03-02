@@ -183,6 +183,7 @@ The chat interface is built with React and can be customized in `app.tsx`:
 - Customize message rendering and tool confirmation dialogs
 - Add new controls to the header
 
+
 ### Example Use Cases
 
 1. **Customer Support Agent**
