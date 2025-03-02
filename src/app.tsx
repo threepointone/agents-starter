@@ -8,6 +8,8 @@ import {
 	ChatMessage,
 	ChatMessageAvatar,
 	ChatMessageContent,
+	ChatMessageTimestamp,
+	ChatMessageBody,
 } from "@/components/ui/chat-message";
 import { ChatMessageArea } from "@/components/ui/chat-message-area";
 import { useAgent } from "agents-sdk/react";
@@ -16,7 +18,7 @@ import type { Message } from "@ai-sdk/react";
 import { ThemeProvider } from "./components/theme-provider";
 import { ThemeToggle } from "./components/theme-toggle";
 import { Button } from "./components/ui/button";
-import { TrashIcon } from "lucide-react";
+import { CloudIcon, TrashIcon } from "lucide-react";
 import { Separator } from "./components/ui/separator";
 
 // List of tools that require human confirmation
@@ -66,7 +68,6 @@ export default function App() {
 			<div className="flex flex-col h-screen">
 				<header className="sticky top-0 shrink-0 bg-background border-b border-border p-3">
 					<div className="w-full max-w-screen-md mx-auto flex flex-col sm:flex-row justify-between gap-4 px-2 md:px-4">
-						{/* Title */}
 						<div className="flex flex-col items-start">
 							<div className="flex items-center gap-3">
 								<img src="/favicon.ico" alt="logo" className="size-8" />
@@ -101,21 +102,18 @@ export default function App() {
 								</p>
 							</div>
 						</div>
-
-						{/* Messages - horizontal for both mobile and desktop */}
-
-						{/* Buttons - only visible on mobile */}
 						<div className="flex justify-start items-center gap-2 sm:py-2">
-							<ThemeToggle />
-							<Separator orientation="vertical" />
 							<Button
 								variant="outline"
+								size="sm"
 								onClick={clearHistory}
 								className="flex items-center gap-2"
 							>
 								<TrashIcon />
 								Clear history
 							</Button>
+							<Separator orientation="vertical" />
+							<ThemeToggle />
 						</div>
 					</div>
 				</header>
@@ -126,8 +124,17 @@ export default function App() {
 								if (message.role !== "user") {
 									return (
 										<ChatMessage key={message.id} id={message.id}>
-											<ChatMessageAvatar />
-											<ChatMessageContent content={message.content} />
+											<ChatMessageAvatar imageSrc="/favicon.ico" />
+											<ChatMessageBody>
+												<ChatMessageTimestamp
+													timestamp={
+														message.createdAt
+															? new Date(message.createdAt)
+															: new Date()
+													}
+												/>
+												<ChatMessageContent content={message.content} />
+											</ChatMessageBody>
 										</ChatMessage>
 									);
 								}
@@ -138,7 +145,16 @@ export default function App() {
 										variant="bubble"
 										type="outgoing"
 									>
-										<ChatMessageContent content={message.content} />
+										<ChatMessageBody>
+											<ChatMessageTimestamp
+												timestamp={
+													message.createdAt
+														? new Date(message.createdAt)
+														: new Date()
+												}
+											/>
+											<ChatMessageContent content={message.content} />
+										</ChatMessageBody>
 									</ChatMessage>
 								);
 							})}

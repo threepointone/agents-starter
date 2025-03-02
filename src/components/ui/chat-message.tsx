@@ -118,13 +118,119 @@ function ChatMessageAvatar({
 				<img
 					src={imageSrc}
 					alt="Avatar"
-					className="h-full w-full object-cover"
+					className="h-full w-full object-cover p-1"
 				/>
 			) : (
 				<div className="translate-y-px [&_svg]:size-4 [&_svg]:shrink-0">
 					{icon}
 				</div>
 			)}
+		</div>
+	);
+}
+
+const chatMessageBodyVariants = cva("flex flex-col flex-1 gap-2", {
+	variants: {
+		type: {
+			incoming: "",
+			outgoing: "items-end",
+		},
+	},
+	defaultVariants: {
+		type: "incoming",
+	},
+});
+
+interface ChatMessageBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+	children?: React.ReactNode;
+}
+
+function ChatMessageBody({
+	className,
+	children,
+	...props
+}: ChatMessageBodyProps) {
+	const context = useChatMessage();
+	const type = context?.type ?? "incoming";
+
+	return (
+		<div
+			className={cn(chatMessageBodyVariants({ type, className }))}
+			{...props}
+		>
+			{children}
+		</div>
+	);
+}
+
+const chatMessageTimestampVariants = cva("text-xs text-muted-foreground/75", {
+	variants: {
+		type: {
+			incoming: "text-left",
+			outgoing: "text-right",
+		},
+	},
+	defaultVariants: {
+		type: "incoming",
+	},
+});
+
+interface ChatMessageTimestampProps
+	extends React.HTMLAttributes<HTMLDivElement> {
+	format?: (date: Date) => string;
+	timestamp: Date;
+}
+
+function ChatMessageTimestamp({
+	className,
+	format,
+	timestamp,
+	...props
+}: ChatMessageTimestampProps) {
+	const context = useChatMessage();
+	const type = context?.type ?? "incoming";
+
+	const formatTimestamp = (date: Date) => {
+		if (format) {
+			return format(date);
+		}
+
+		const now = new Date();
+		const isToday = date.toDateString() === now.toDateString();
+		const isThisYear = date.getFullYear() === now.getFullYear();
+
+		if (isToday) {
+			return date.toLocaleTimeString(undefined, {
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		}
+
+		if (isThisYear) {
+			return date.toLocaleDateString(undefined, {
+				month: "short",
+				day: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		}
+
+		return date.toLocaleDateString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
+	return (
+		<div
+			className={cn(chatMessageTimestampVariants({ type, className }))}
+			title={timestamp.toLocaleString()}
+			{...props}
+		>
+			{formatTimestamp(timestamp)}
 		</div>
 	);
 }
@@ -190,4 +296,10 @@ function ChatMessageContent({
 	);
 }
 
-export { ChatMessage, ChatMessageAvatar, ChatMessageContent };
+export {
+	ChatMessage,
+	ChatMessageAvatar,
+	ChatMessageBody,
+	ChatMessageContent,
+	ChatMessageTimestamp,
+};
