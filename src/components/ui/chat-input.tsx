@@ -15,6 +15,7 @@ interface ChatInputContextValue {
 	onStop?: () => void;
 	variant?: "default" | "unstyled";
 	rows?: number;
+	disabled?: boolean;
 }
 
 const ChatInputContext = createContext<ChatInputContextValue>({});
@@ -24,6 +25,7 @@ interface ChatInputProps extends Omit<ChatInputContextValue, "variant"> {
 	className?: string;
 	variant?: "default" | "unstyled";
 	rows?: number;
+	disabled?: boolean;
 }
 
 function ChatInput({
@@ -36,6 +38,7 @@ function ChatInput({
 	loading,
 	onStop,
 	rows = 1,
+	disabled,
 }: ChatInputProps) {
 	const contextValue: ChatInputContextValue = {
 		value,
@@ -45,6 +48,7 @@ function ChatInput({
 		onStop,
 		variant,
 		rows,
+		disabled,
 	};
 
 	return (
@@ -68,6 +72,7 @@ interface ChatInputTextAreaProps extends React.ComponentProps<typeof Textarea> {
 	onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
 	onSubmit?: () => void;
 	variant?: "default" | "unstyled";
+	disabled?: boolean;
 }
 
 function ChatInputTextArea({
@@ -76,6 +81,7 @@ function ChatInputTextArea({
 	onChange: onChangeProp,
 	className,
 	variant: variantProp,
+	disabled: disabledProp,
 	...props
 }: ChatInputTextAreaProps) {
 	const context = useContext(ChatInputContext);
@@ -83,6 +89,7 @@ function ChatInputTextArea({
 	const onChange = onChangeProp ?? context.onChange;
 	const onSubmit = onSubmitProp ?? context.onSubmit;
 	const rows = context.rows ?? 1;
+	const disabled = disabledProp ?? context.disabled ?? false;
 
 	const variant =
 		variantProp ?? (context.variant === "default" ? "unstyled" : "default");
@@ -112,9 +119,11 @@ function ChatInputTextArea({
 				"max-h-[400px] min-h-0 resize-none overflow-x-hidden",
 				variant === "unstyled" &&
 					"border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none",
+				//disabled && "cursor-not-allowed opacity-50",
 				className,
 			)}
 			rows={rows}
+			disabled={disabled}
 		/>
 	);
 }
@@ -123,6 +132,7 @@ interface ChatInputSubmitProps extends React.ComponentProps<typeof Button> {
 	onSubmit?: () => void;
 	loading?: boolean;
 	onStop?: () => void;
+	disabled?: boolean;
 }
 
 function ChatInputSubmit({
@@ -130,12 +140,14 @@ function ChatInputSubmit({
 	loading: loadingProp,
 	onStop: onStopProp,
 	className,
+	disabled: disabledProp,
 	...props
 }: ChatInputSubmitProps) {
 	const context = useContext(ChatInputContext);
 	const loading = loadingProp ?? context.loading;
 	const onStop = onStopProp ?? context.onStop;
 	const onSubmit = onSubmitProp ?? context.onSubmit;
+	const disabled = disabledProp ?? context.disabled ?? false;
 
 	if (loading && onStop) {
 		return (
@@ -168,7 +180,9 @@ function ChatInputSubmit({
 	}
 
 	const isDisabled =
-		typeof context.value !== "string" || context.value.trim().length === 0;
+		disabled ||
+		typeof context.value !== "string" ||
+		context.value.trim().length === 0;
 
 	return (
 		<Button
