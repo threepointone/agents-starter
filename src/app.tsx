@@ -1,209 +1,94 @@
-import { useEffect, useState, useRef } from "react";
+import type { tools } from "./tools";
+import {
+	ChatInput,
+	ChatInputSubmit,
+	ChatInputTextArea,
+} from "@/components/ui/chat-input";
+import {
+	ChatMessage,
+	ChatMessageAvatar,
+	ChatMessageContent,
+} from "@/components/ui/chat-message";
+import { ChatMessageArea } from "@/components/ui/chat-message-area";
 import { useAgent } from "agents-sdk/react";
 import { useAgentChat } from "agents-sdk/ai-react";
-import { type Message } from "@ai-sdk/react";
-import { APPROVAL } from "./shared";
-import type { tools } from "./tools";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
-  "getWeatherInformation",
+	"getWeatherInformation",
 ];
 
-export default function Chat() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+export default function App() {
+	const agent = useAgent({
+		agent: "chat",
+	});
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+	const {
+		messages,
+		input,
+		handleInputChange,
+		handleSubmit,
+		isLoading,
+		addToolResult,
+		clearHistory,
+		stop,
+	} = useAgentChat({
+		agent,
+		maxSteps: 5,
+	});
 
-  useEffect(() => {
-    // Set initial theme
-    document.documentElement.setAttribute("data-theme", theme);
-  }, []);
+	const handleSubmitMessage = () => {
+		if (isLoading) {
+			return;
+		}
+		handleSubmit();
+	};
 
-  // Scroll to bottom on mount
-  useEffect(() => {
-    scrollToBottom();
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-  };
-
-  const agent = useAgent({
-    agent: "chat",
-  });
-
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    addToolResult,
-    clearHistory,
-  } = useAgentChat({
-    agent,
-    maxSteps: 5,
-  });
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const pendingToolCallConfirmation = messages.some((m: Message) =>
-    m.parts?.some(
-      (part) =>
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "call" &&
-        toolsRequiringConfirmation.includes(
-          part.toolInvocation.toolName as keyof typeof tools
-        )
-    )
-  );
-
-  return (
-    <div className="app-container">
-      <header className="app-header">
-        <div className="header-content">
-          <h1>AI Chat Assistant</h1>
-          <p className="subtitle">Powered by Cloudflare Agents</p>
-        </div>
-        <div className="controls-container">
-          <button
-            onClick={toggleTheme}
-            className="theme-switch"
-            data-theme={theme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            <div className="theme-switch-handle" />
-          </button>
-          <button onClick={clearHistory} className="clear-history">
-            🗑️ Clear History
-          </button>
-        </div>
-      </header>
-
-      <div className="chat-container">
-        <div className="messages-wrapper">
-          {messages.length === 0 && (
-            <div className="welcome-message">
-              <h2>👋 Welcome!</h2>
-              <p>
-                Start a conversation with your AI assistant. Try asking about:
-              </p>
-              <ul>
-                <li>🌤️ Weather information for any city</li>
-                <li>🕒 Local time in different locations</li>
-              </ul>
-            </div>
-          )}
-          {messages?.map((m: Message) => (
-            <div key={m.id} className={`message ${m.role}-message`}>
-              <div className="message-header">
-                <span className="message-role">{m.role}</span>
-                <span className="message-time">
-                  {new Date().toLocaleTimeString()}
-                </span>
-              </div>
-              {m.parts?.map((part, i) => {
-                switch (part.type) {
-                  case "text":
-                    return (
-                      <div
-                        key={i}
-                        className={`message-content ${
-                          part.text.startsWith("scheduled message")
-                            ? "scheduled-message"
-                            : ""
-                        }`}
-                      >
-                        {part.text.replace(/^scheduled message: /, "")}
-                      </div>
-                    );
-                  case "tool-invocation":
-                    const toolInvocation = part.toolInvocation;
-                    const toolCallId = toolInvocation.toolCallId;
-
-                    if (
-                      toolsRequiringConfirmation.includes(
-                        toolInvocation.toolName as keyof typeof tools
-                      ) &&
-                      toolInvocation.state === "call"
-                    ) {
-                      return (
-                        <div key={toolCallId} className="tool-invocation">
-                          <div className="tool-header">
-                            <span className="tool-icon">🛠️</span>
-                            <span className="tool-name">
-                              {toolInvocation.toolName}
-                            </span>
-                          </div>
-                          <div className="tool-args">
-                            Arguments:{" "}
-                            <code>
-                              {JSON.stringify(toolInvocation.args, null, 2)}
-                            </code>
-                          </div>
-                          <div className="button-container">
-                            <button
-                              className="button-approve"
-                              onClick={() =>
-                                addToolResult({
-                                  toolCallId,
-                                  result: APPROVAL.YES,
-                                })
-                              }
-                            >
-                              ✓ Approve
-                            </button>
-                            <button
-                              className="button-reject"
-                              onClick={() =>
-                                addToolResult({
-                                  toolCallId,
-                                  result: APPROVAL.NO,
-                                })
-                              }
-                            >
-                              ✕ Reject
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    }
-                }
-              })}
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <form onSubmit={handleSubmit} className="input-form">
-          <input
-            disabled={pendingToolCallConfirmation}
-            className="chat-input"
-            value={input}
-            placeholder={
-              pendingToolCallConfirmation
-                ? "Please respond to the tool confirmation above..."
-                : "Type your message here..."
-            }
-            onChange={handleInputChange}
-          />
-          <button
-            type="submit"
-            className="send-button"
-            disabled={pendingToolCallConfirmation || !input.trim()}
-          >
-            Send
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+	return (
+		<div className="flex flex-col h-screen">
+			<header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background border-b border-border">
+				<div className="flex flex-1 items-center gap-2 px-3">
+					Cloudflare Agents Starter
+				</div>
+			</header>
+			<div className="flex-1 overflow-hidden">
+				<ChatMessageArea scrollButtonAlignment="center" className="h-full">
+					<div className="max-w-2xl mx-auto w-full px-4 py-8 space-y-4">
+						{messages.map((message) => {
+							if (message.role !== "user") {
+								return (
+									<ChatMessage key={message.id} id={message.id}>
+										<ChatMessageAvatar />
+										<ChatMessageContent content={message.content} />
+									</ChatMessage>
+								);
+							}
+							return (
+								<ChatMessage
+									key={message.id}
+									id={message.id}
+									variant="bubble"
+									type="outgoing"
+								>
+									<ChatMessageContent content={message.content} />
+								</ChatMessage>
+							);
+						})}
+					</div>
+				</ChatMessageArea>
+			</div>
+			<div className="px-2 py-4 max-w-2xl mx-auto w-full">
+				<ChatInput
+					value={input}
+					onChange={handleInputChange}
+					onSubmit={handleSubmitMessage}
+					loading={isLoading}
+					onStop={stop}
+				>
+					<ChatInputTextArea placeholder="Type a message..." />
+					<ChatInputSubmit />
+				</ChatInput>
+			</div>
+		</div>
+	);
 }

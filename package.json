@@ -35,6 +35,7 @@
     "@ai-sdk/openai": "^1.1.14",
     "@ai-sdk/react": "^1.1.18",
     "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-separator": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "agents-sdk": "^0.0.22",
     "ai": "^4.1.46",

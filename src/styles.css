@@ -20,7 +20,7 @@
 		Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
-    
+
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.141 0.005 285.823);
 	--card: oklch(1 0 0);
