@@ -18,11 +18,12 @@ import type { Message } from "@ai-sdk/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { CloudIcon, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ToolInvocationComponent } from "@/components/tool-invocation";
 import { useEffect } from "react";
 import { cn } from "./lib/utils";
+import { WelcomeMessage } from "./components/welcome-message";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
@@ -125,11 +126,72 @@ export default function App() {
 				<div className="flex-1 overflow-hidden">
 					<ChatMessageArea scrollButtonAlignment="center" className="h-full">
 						<div className="max-w-2xl mx-auto w-full px-4 py-8 space-y-4">
-							{messages.map((message: Message) => {
-								if (message.role !== "user") {
+							{messages.length === 0 ? (
+								<WelcomeMessage
+									handleInputChange={handleInputChange}
+									handleSubmitMessage={handleSubmitMessage}
+								/>
+							) : (
+								messages.map((message: Message) => {
+									if (message.role !== "user") {
+										return (
+											<ChatMessage key={message.id} id={message.id}>
+												<ChatMessageAvatar imageSrc="/favicon.ico" />
+												<ChatMessageBody>
+													<ChatMessageTimestamp
+														timestamp={
+															message.createdAt
+																? new Date(message.createdAt)
+																: new Date()
+														}
+													/>
+													{message.parts?.map((part, index) => {
+														switch (part.type) {
+															case "text":
+																return (
+																	<ChatMessageContent
+																		key={`${message.id}-text-${index}`}
+																		content={part.text.replace(
+																			/^scheduled message: /,
+																			"",
+																		)}
+																		className={cn(
+																			part.text.startsWith(
+																				"scheduled-message",
+																			) && "font-bold",
+																		)}
+																	/>
+																);
+															case "tool-invocation":
+																return (
+																	<ToolInvocationComponent
+																		key={part.toolInvocation.toolCallId}
+																		toolInvocation={part.toolInvocation}
+																		toolsRequiringConfirmation={
+																			toolsRequiringConfirmation
+																		}
+																		addToolResult={(result) => {
+																			addToolResult({
+																				toolCallId:
+																					part.toolInvocation.toolCallId,
+																				result,
+																			});
+																		}}
+																	/>
+																);
+														}
+													})}
+												</ChatMessageBody>
+											</ChatMessage>
+										);
+									}
 									return (
-										<ChatMessage key={message.id} id={message.id}>
-											<ChatMessageAvatar imageSrc="/favicon.ico" />
+										<ChatMessage
+											key={message.id}
+											id={message.id}
+											variant="bubble"
+											type="outgoing"
+										>
 											<ChatMessageBody>
 												<ChatMessageTimestamp
 													timestamp={
@@ -138,65 +200,12 @@ export default function App() {
 															: new Date()
 													}
 												/>
-												{message.parts?.map((part, index) => {
-													switch (part.type) {
-														case "text":
-															return (
-																<ChatMessageContent
-																	key={index}
-																	content={part.text.replace(
-																		/^scheduled message: /,
-																		"",
-																	)}
-																	className={cn(
-																		part.text.startsWith("scheduled-message") &&
-																			"font-bold",
-																	)}
-																/>
-															);
-														case "tool-invocation":
-															return (
-																<ToolInvocationComponent
-																	key={part.toolInvocation.toolCallId}
-																	toolInvocation={part.toolInvocation}
-																	toolsRequiringConfirmation={
-																		toolsRequiringConfirmation
-																	}
-																	addToolResult={(result) => {
-																		addToolResult({
-																			toolCallId:
-																				part.toolInvocation.toolCallId,
-																			result,
-																		});
-																	}}
-																/>
-															);
-													}
-												})}
+												<ChatMessageContent content={message.content} />
 											</ChatMessageBody>
 										</ChatMessage>
 									);
-								}
-								return (
-									<ChatMessage
-										key={message.id}
-										id={message.id}
-										variant="bubble"
-										type="outgoing"
-									>
-										<ChatMessageBody>
-											<ChatMessageTimestamp
-												timestamp={
-													message.createdAt
-														? new Date(message.createdAt)
-														: new Date()
-												}
-											/>
-											<ChatMessageContent content={message.content} />
-										</ChatMessageBody>
-									</ChatMessage>
-								);
-							})}
+								})
+							)}
 						</div>
 					</ChatMessageArea>
 				</div>

@@ -8,7 +8,6 @@ import { idToReadableText } from "@/lib/id-parsing";
 import type { ToolInvocation } from "ai";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import { APPROVAL } from "@/shared";
 
 interface ToolInvocationComponentProps {
