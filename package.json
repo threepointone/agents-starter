@@ -34,10 +34,21 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.1.14",
     "@ai-sdk/react": "^1.1.18",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-slot": "^1.1.2",
     "agents-sdk": "^0.0.22",
     "ai": "^4.1.46",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.477.0",
+    "marked": "^15.0.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.0.0",
+    "remark-gfm": "^4.0.1",
+    "shiki": "^3.1.0",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.2"
   }
 }
