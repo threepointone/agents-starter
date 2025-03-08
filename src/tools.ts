@@ -37,7 +37,7 @@ const scheduleTask = tool({
     "schedule a task to be executed at a later time. 'when' can be a date, a delay in seconds, or a cron pattern.",
   parameters: z.object({
     type: z.enum(["scheduled", "delayed", "cron"]),
-    when: z.union([z.number(), z.string()]),
+    when: z.string(),
     payload: z.string(),
   }),
   execute: async ({ type, when, payload }) => {
